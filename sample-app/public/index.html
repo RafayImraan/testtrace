@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ShopEase - Sample App (SUT)</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:Inter,system-ui,sans-serif;background:#f8fafc;color:#0f172a;line-height:1.5}
+    header{background:#0f172a;color:#fff;padding:16px 24px;display:flex;justify-content:space-between;align-items:center}
+    header a{color:#38bdf8;text-decoration:none;margin-left:12px}
+    .container{max-width:1000px;margin:24px auto;padding:0 16px}
+    .card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+    .badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600}
+    .badge-green{background:#dcfce7;color:#166534}
+    .badge-red{background:#fee2e2;color:#991b1b}
+    .badge-blue{background:#dbeafe;color:#1e40af}
+    button{background:#0ea5e9;color:#fff;border:none;padding:10px 16px;border-radius:8px;cursor:pointer;font-weight:600}
+    button:disabled{opacity:.5;cursor:not-allowed}
+    input{padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;width:100%;margin:6px 0 12px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+    .product{border:1px solid #e2e8f0;border-radius:10px;padding:14px;background:#fff}
+    .muted{color:#64748b;font-size:13px}
+    .error{color:#dc2626;background:#fef2f2;border:1px solid #fecaca;padding:8px 12px;border-radius:8px;margin:8px 0}
+    .success{color:#15803d;background:#f0fdf4;border:1px solid #bbf7d0;padding:8px 12px;border-radius:8px;margin:8px 0}
+  </style>
+</head>
+<body>
+<header>
+  <div><strong>🛍️ ShopEase</strong> <span class="badge badge-blue">Sample App (SUT)</span> <span id="bugBadge" class="badge badge-red">BUG_MODE ON</span></div>
+  <nav><a href="#" onclick="show('home')">Home</a><a href="#" onclick="show('login')">Login</a><a href="#" onclick="show('products')">Products</a><a href="#" onclick="show('cart')">Cart (<span id="cartCount">0</span>)</a><a href="#" onclick="show('checkout')">Checkout</a></nav>
+</header>
+<div class="container">
+  <div id="home" class="card">
+    <h2>Welcome to ShopEase (System Under Test)</h2>
+    <p class="muted">This is a deliberately small e-commerce app with intentional bugs to demonstrate the automation module.</p>
+    <ul style="margin:12px 0 0 18px">
+      <li>Login: user@shop.local / User@123 , admin@shop.local / Admin@123</li>
+      <li>Products API: GET /api/products?q=mouse</li>
+      <li>Cart API: POST /api/cart { productId, qty }</li>
+      <li>Checkout API: POST /api/checkout { items, address, coupon }</li>
+      <li>Health: GET /api/health</li>
+    </ul>
+    <p style="margin-top:12px"><span class="badge badge-red">Intentional bugs</span> are enabled when BUG_MODE=true: empty product search 500s, checkout FAIL coupon 500s, cart total off by 1 when qty>3, login admin random 500.</p>
+  </div>
+
+  <div id="login" class="card" style="display:none">
+    <h3>Login</h3>
+    <div id="loginMsg"></div>
+    <input id="loginEmail" placeholder="Email" value="user@shop.local" />
+    <input id="loginPass" type="password" placeholder="Password" value="User@123" />
+    <button id="loginBtn" onclick="doLogin()">Login</button>
+  </div>
+
+  <div id="products" class="card" style="display:none">
+    <h3>Products</h3>
+    <input id="searchQ" placeholder="Search products..." oninput="loadProducts()" />
+    <div id="productsMsg"></div>
+    <div id="productsGrid" class="grid"></div>
+  </div>
+
+  <div id="cart" class="card" style="display:none">
+    <h3>Cart</h3>
+    <div id="cartList"></div>
+    <div id="cartTotal" style="margin-top:12px;font-weight:700"></div>
+  </div>
+
+  <div id="checkout" class="card" style="display:none">
+    <h3>Checkout</h3>
+    <div id="checkoutMsg"></div>
+    <input id="checkoutAddr" placeholder="Shipping address" value="123 Main St, Karachi" />
+    <input id="checkoutCoupon" placeholder="Coupon (try SAVE10, FAIL, BUG)" />
+    <button onclick="doCheckout()">Place Order</button>
+  </div>
+</div>
+
+<script>
+let cart = JSON.parse(localStorage.getItem('cart')||'[]');
+let token = localStorage.getItem('token')||'';
+function saveCart(){localStorage.setItem('cart', JSON.stringify(cart)); document.getElementById('cartCount').textContent = cart.reduce((s,i)=>s+i.qty,0);}
+saveCart();
+function show(id){document.querySelectorAll('.container > div').forEach(d=>d.style.display='none'); document.getElementById(id).style.display='block'; if(id==='products') loadProducts(); if(id==='cart') renderCart();}
+async function api(path, opts={}){ const res = await fetch(path, {headers:{'Content-Type':'application/json', ...(token?{Authorization:`Bearer ${token}`}:{})}, ...opts}); const data = await res.json().catch(()=>({})); return {res, data};}
+async function doLogin(){
+  const btn=document.getElementById('loginBtn'); btn.disabled=true; const msg=document.getElementById('loginMsg'); msg.innerHTML='';
+  // intentional race: button disabled for 500ms
+  setTimeout(()=>btn.disabled=false, 600);
+  const email=document.getElementById('loginEmail').value, password=document.getElementById('loginPass').value;
+  const {res,data}=await api('/api/login',{method:'POST', body:JSON.stringify({email,password})});
+  if(!res.ok){msg.innerHTML=`<div class="error">${data.error||'Login failed'}</div>`; return;}
+  token=data.token; localStorage.setItem('token', token);
+  msg.innerHTML=`<div class="success">Logged in as ${data.user.name}</div>`;
+}
+async function loadProducts(){
+  const q=document.getElementById('searchQ').value; const grid=document.getElementById('productsGrid'); const msg=document.getElementById('productsMsg');
+  msg.innerHTML='<span class="muted">Loading...</span>';
+  const {res,data}=await api(`/api/products?q=${encodeURIComponent(q)}`);
+  if(!res.ok){msg.innerHTML=`<div class="error">${data.error||'Failed to load'}</div>`; grid.innerHTML=''; return;}
+  msg.innerHTML=`<span class="muted">${data.total} products</span>`; grid.innerHTML='';
+  data.data.forEach(p=>{
+    const div=document.createElement('div'); div.className='product';
+    div.innerHTML=`<strong>${p.name}</strong><div class="muted">${p.category} • $${p.price}</div><div style="margin-top:8px"><button onclick="addToCart(${p.id})">Add to cart</button></div>`;
+    grid.appendChild(div);
+  });
+}
+function addToCart(id){ const ex=cart.find(c=>c.productId===id); if(ex) ex.qty++; else cart.push({productId:id, qty:1, price:0}); saveCart(); renderCart(); alert('Added to cart'); }
+function renderCart(){ const list=document.getElementById('cartList'); if(!cart.length){list.innerHTML='<span class="muted">Cart empty</span>'; document.getElementById('cartTotal').textContent=''; return;} list.innerHTML=cart.map((c,i)=>`<div>${c.productId} x ${c.qty} <button onclick="cart.splice(${i},1); saveCart(); renderCart();">Remove</button></div>`).join(''); }
+async function doCheckout(){
+  const msg=document.getElementById('checkoutMsg'); const addr=document.getElementById('checkoutAddr').value; const coupon=document.getElementById('checkoutCoupon').value;
+  const items=cart.map(c=>({productId:c.productId, qty:c.qty, price:25}));
+  const {res,data}=await api('/api/checkout',{method:'POST', body:JSON.stringify({items, address:addr, coupon})});
+  if(!res.ok){msg.innerHTML=`<div class="error">${data.error}</div>`; return;}
+  msg.innerHTML=`<div class="success">Order ${data.orderId} confirmed! Email sent: ${data.emailSent}</div>`; cart=[]; saveCart();
+}
+fetch('/api/health').then(r=>r.json()).then(d=>{document.getElementById('bugBadge').textContent = d.bugMode ? 'BUG_MODE ON' : 'BUG_MODE OFF'; document.getElementById('bugBadge').className = d.bugMode ? 'badge badge-red' : 'badge badge-green';}).catch(()=>{});
+</script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# env / secrets
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# build output
+dist/
+build/
+coverage/
+out/
+
+# logs & runtime
+*.log
+npm-debug.log*
+worker/src/.tmp/
+worker/.artifacts/
+backend/uploads/
+**/uploads/screenshots/*
+!**/uploads/screenshots/.gitkeep
+
+# playwright
+worker/test-results/
+worker/playwright-report/
+**/.cache/ms-playwright/
+
+# editors / os
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

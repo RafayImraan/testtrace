@@ -1,0 +1,28 @@
+{
+  "name": "test-trace-automate",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Root workspace: database scripts + convenience commands for the whole platform",
+  "scripts": {
+    "migrate": "node db/migrate.js",
+    "migrate:reset": "node db/migrate.js --reset",
+    "seed": "node db/seed/seed.js",
+    "setup:db": "npm run migrate:reset && npm run seed",
+    "install:all": "npm install && npm --prefix backend install && npm --prefix frontend install && npm --prefix worker install",
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "dev:worker": "npm --prefix worker run dev",
+    "dev:sample": "node sample-app/server.js",
+    "test": "npm --prefix backend test"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.4.5",
+    "pg": "^8.12.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "eslint-plugin-react": "^7.37.5",
+    "prettier": "^3.3.3"
+  }
+}
