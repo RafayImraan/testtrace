@@ -17,7 +17,7 @@ router.get('/runs/:id', validate({ params: z.object({ id: idParam }) }), ctrl.ge
 router.post('/run', validate({ body: z.object({ testCaseIds: z.array(z.coerce.number().int().positive()).optional(), cycleId: z.coerce.number().int().positive().optional(), cycleTestIds: z.array(z.coerce.number().int().positive()).optional() }) }), ctrl.triggerRun);
 
 router.post('/claim', validate({ body: z.object({ limit: z.coerce.number().int().min(1).max(20).optional(), workerId: z.string().max(80).optional() }) }), ctrl.claim);
-router.post('/runs/:id/result', validate({ params: z.object({ id: idParam }), body: z.object({ status: z.enum(['PASSED','FAILED']), log: z.string().max(20000).optional(), error: z.string().max(10000).optional(), screenshotPath: z.string().max(500).optional(), durationMs: z.coerce.number().int().optional(), workerId: z.string().max(80).optional() }) }), ctrl.ingest);
+router.post('/runs/:id/result', validate({ params: z.object({ id: idParam }), body: z.object({ status: z.enum(['PASSED','FAILED']), log: z.string().max(20000).nullish(), error: z.string().max(10000).nullish(), screenshotPath: z.string().max(500).nullish(), durationMs: z.coerce.number().int().optional(), workerId: z.string().max(80).optional() }) }), ctrl.ingest);
 
 router.get('/schedules', ctrl.listSchedules);
 router.post('/schedules', authorize('admin','lead'), validate({ body: z.object({ cycleId: z.coerce.number().int().positive(), enabled: z.coerce.boolean(), cron: z.string().max(60).optional() }) }), ctrl.saveSchedule);

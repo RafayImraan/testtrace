@@ -58,8 +58,17 @@ async function claimRuns() {
 }
 
 async function postResult(runId, result) {
+  // Drop null/undefined fields and cap lengths so validation can never reject a result.
+  const body = {};
+  for (const [k, v] of Object.entries(result)) {
+    if (v === null || v === undefined) continue;
+    body[k] = v;
+  }
+  if (typeof body.log === 'string') body.log = body.log.slice(0, 20000);
+  if (typeof body.error === 'string') body.error = body.error.slice(0, 10000);
+  if (typeof body.screenshotPath === 'string') body.screenshotPath = body.screenshotPath.slice(0, 500);
   try {
-    await axios.post(`${config.backendUrl}/api/automation/runs/${runId}/result`, result, {
+    await axios.post(`${config.backendUrl}/api/automation/runs/${runId}/result`, body, {
       headers: { Authorization: `Bearer ${token}` },
     });
     console.log(`[worker] run ${runId} -> ${result.status} (${result.durationMs}ms)`);
