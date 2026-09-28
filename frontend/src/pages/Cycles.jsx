@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import api from '../lib/api';
+import api, { API_BASE } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -94,7 +94,7 @@ export default function Cycles() {
       <div className="flex-1 bg-white border rounded-xl p-4 overflow-auto">
         {!selected ? <div className="text-sm text-slate-500">Select a cycle</div> : (
           <div className="space-y-4">
-            <div className="flex justify-between"><div><h2 className="text-xl font-bold">{selected.name}</h2><div className="text-sm text-slate-500">{selected.description}</div><div className="text-xs mt-1">Status: {selected.status} • {selected.stats.total} tests • Pass rate {selected.stats.passRate}% • Overdue {selected.stats.overdue}</div></div><div className="flex gap-2"><Link to={`/kanban?cycleId=${selected.id}`} className="px-3 py-1.5 bg-slate-100 rounded text-sm">Kanban</Link><a href={`/api/reports/cycle/${selected.id}.pdf`} target="_blank" className="px-3 py-1.5 bg-slate-100 rounded text-sm">PDF</a><a href={`/api/reports/cycle/${selected.id}.xlsx`} target="_blank" className="px-3 py-1.5 bg-slate-100 rounded text-sm">Excel</a></div></div>
+            <div className="flex justify-between"><div><h2 className="text-xl font-bold">{selected.name}</h2><div className="text-sm text-slate-500">{selected.description}</div><div className="text-xs mt-1">Status: {selected.status} • {selected.stats.total} tests • Pass rate {selected.stats.passRate}% • Overdue {selected.stats.overdue}</div></div><div className="flex gap-2"><Link to={`/kanban?cycleId=${selected.id}`} className="px-3 py-1.5 bg-slate-100 rounded text-sm">Kanban</Link><a href={`${API_BASE}/api/reports/cycle/${selected.id}.pdf`} target="_blank" className="px-3 py-1.5 bg-slate-100 rounded text-sm">PDF</a><a href={`${API_BASE}/api/reports/cycle/${selected.id}.xlsx`} target="_blank" className="px-3 py-1.5 bg-slate-100 rounded text-sm">Excel</a></div></div>
 
             {isLead && (
               <div className="p-3 bg-slate-50 rounded-lg space-y-3">

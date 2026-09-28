@@ -1,9 +1,12 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || '';
+// Absolute backend origin ('' in dev where the Vite proxy handles /api).
+// Exported so links that leave the axios layer (PDF/Excel, screenshots)
+// also work when the frontend and backend live on different domains.
+export const API_BASE = import.meta.env.VITE_API_URL || '';
 
 const api = axios.create({
-  baseURL: API_URL ? `${API_URL}/api` : '/api',
+  baseURL: API_BASE ? `${API_BASE}/api` : '/api',
   timeout: 15000,
 });
 

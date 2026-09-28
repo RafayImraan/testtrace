@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import api from '../lib/api';
+import api, { API_BASE } from '../lib/api';
 import { getSocket } from '../lib/socket';
 import toast from 'react-hot-toast';
 
@@ -63,7 +63,7 @@ export default function Automation() {
             <div className="mt-3 grid grid-cols-2 gap-2 text-sm"><div>Status: <span className="font-mono">{selectedRun.run.status}</span></div><div>Duration: {selectedRun.run.durationMs}ms</div><div>Trigger: {selectedRun.run.triggerType}</div><div>Worker: {selectedRun.run.workerId}</div></div>
             <div className="mt-4"><div className="text-sm font-semibold">Log</div><pre className="mt-1 bg-slate-900 text-green-200 p-3 rounded text-xs overflow-auto max-h-64">{selectedRun.run.log || 'No log'}</pre></div>
             {selectedRun.run.error && <div className="mt-3"><div className="text-sm font-semibold text-red-600">Error</div><pre className="mt-1 bg-red-50 p-3 rounded text-xs overflow-auto">{selectedRun.run.error}</pre></div>}
-            {selectedRun.run.screenshotPath && <div className="mt-3"><div className="text-sm font-semibold">Screenshot</div><img src={selectedRun.run.screenshotPath} alt="failure" className="mt-2 max-w-full border rounded" /><div className="text-xs text-slate-500 mt-1">{selectedRun.run.screenshotPath}</div></div>}
+            {selectedRun.run.screenshotPath && <div className="mt-3"><div className="text-sm font-semibold">Screenshot</div><img src={`${API_BASE}${selectedRun.run.screenshotPath}`} alt="failure" className="mt-2 max-w-full border rounded" /><div className="text-xs text-slate-500 mt-1">{selectedRun.run.screenshotPath}</div></div>}
           </div>
         </div>
       )}
