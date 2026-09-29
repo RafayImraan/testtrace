@@ -36,7 +36,9 @@ function createApp() {
         if (!origin || config.corsOrigins.includes(origin) || config.corsOrigins.includes('*')) {
           return callback(null, true);
         }
-        return callback(new Error(`Origin ${origin} is not allowed by CORS`));
+        // Unknown origin: respond without CORS headers (the browser blocks the
+        // response). Never throw here - that would turn a CORS decision into a 500.
+        return callback(null, false);
       },
       credentials: true,
     })
