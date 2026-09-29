@@ -67,14 +67,19 @@ const getStats = asyncHandler(async (req, res) => {
   );
 
   // Execution trend last 14 days
+  const trendJoin = projectId && !cycleId ? 'JOIN test_cycles c ON c.id = e.cycle_id' : '';
+  const trendWhere = [
+    cycleId ? 'e.cycle_id = $1' : projectId ? 'c.project_id = $1' : 'TRUE',
+    `e.created_at >= CURRENT_DATE - INTERVAL '14 days'`,
+  ];
   const trend = await query(
     `SELECT date_trunc('day', e.created_at)::date AS day,
             count(*)::int AS total,
             count(*) FILTER (WHERE e.status = 'passed')::int AS passed,
             count(*) FILTER (WHERE e.status = 'failed')::int AS failed
      FROM executions e
-     ${cycleId ? 'WHERE e.cycle_id = $1' : projectId ? 'JOIN test_cycles c ON c.id = e.cycle_id WHERE c.project_id = $1' : ''}
-     AND e.created_at >= CURRENT_DATE - INTERVAL '14 days'
+     ${trendJoin}
+     WHERE ${trendWhere.join(' AND ')}
      GROUP BY 1
      ORDER BY 1`,
     baseParams
