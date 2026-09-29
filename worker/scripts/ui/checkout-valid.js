@@ -6,6 +6,8 @@ module.exports = async ({ page, sampleAppUrl, log }) => {
   await page.goto(`${base}/`);
   // add product first
   await page.click('text=Products');
+  await page.waitForSelector('#searchQ');
+  await page.fill('#searchQ', 'mouse');
   await page.waitForSelector('.product button');
   await page.click('.product button');
   page.on('dialog', async d => { await d.accept().catch(()=>{}); });

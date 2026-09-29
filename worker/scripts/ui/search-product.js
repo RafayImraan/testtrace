@@ -7,6 +7,7 @@ module.exports = async ({ page, sampleAppUrl, log }) => {
   await page.click('text=Products');
   await page.waitForSelector('#searchQ');
   await page.fill('#searchQ', 'mouse');
+  await page.waitForSelector('.product button');
   await page.waitForTimeout(1000);
   const grid = await page.textContent('#productsGrid');
   log(`Search results: ${grid?.slice(0, 200)}`);

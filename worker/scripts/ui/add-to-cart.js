@@ -5,6 +5,8 @@ module.exports = async ({ page, sampleAppUrl, log }) => {
   const base = sampleAppUrl || 'http://localhost:5000';
   await page.goto(`${base}/`);
   await page.click('text=Products');
+  await page.waitForSelector('#searchQ');
+  await page.fill('#searchQ', 'mouse');
   await page.waitForSelector('.product button');
   const countBefore = await page.textContent('#cartCount');
   log(`Cart count before: ${countBefore}`);
