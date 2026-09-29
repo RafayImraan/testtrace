@@ -64,58 +64,61 @@ export default function TestCases() {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Test Cases</h1>
-        {isLead && <button onClick={openCreate} className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm">+ New Test Case</button>}
+      <div className="flex flex-wrap justify-between items-center gap-3">
+        <div>
+          <h1 className="page-title">Test Cases</h1>
+          <p className="page-sub">Design, prioritize &amp; trace your test coverage</p>
+        </div>
+        {isLead && <button onClick={openCreate} className="btn btn-primary">+ New Test Case</button>}
       </div>
 
-      <div className="bg-white p-4 rounded-xl border flex flex-wrap gap-3">
-        <input placeholder="Search code/title" value={filters.q} onChange={e=>setFilters(f=>({...f,q:e.target.value}))} className="border rounded-lg px-3 py-1.5 text-sm" />
-        <select value={filters.module} onChange={e=>setFilters(f=>({...f,module:e.target.value}))} className="border rounded-lg px-2 py-1.5 text-sm"><option value="">All modules</option>{modules.map(m=><option key={m} value={m}>{m}</option>)}</select>
-        <select value={filters.priority} onChange={e=>setFilters(f=>({...f,priority:e.target.value}))} className="border rounded-lg px-2 py-1.5 text-sm"><option value="">All priorities</option><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="critical">Critical</option></select>
-        <select value={filters.isAutomated} onChange={e=>setFilters(f=>({...f,isAutomated:e.target.value}))} className="border rounded-lg px-2 py-1.5 text-sm"><option value="">Manual+Automated</option><option value="true">Automated only</option><option value="false">Manual only</option></select>
-        <span className="text-xs text-slate-500 self-center">Total: {meta.total}</span>
+      <div className="card p-4 flex flex-wrap gap-3 items-center">
+        <input placeholder="Search code/title" value={filters.q} onChange={e=>setFilters(f=>({...f,q:e.target.value}))} className="input !w-auto" />
+        <select value={filters.module} onChange={e=>setFilters(f=>({...f,module:e.target.value}))} className="input !w-auto !py-2"><option value="">All modules</option>{modules.map(m=><option key={m} value={m}>{m}</option>)}</select>
+        <select value={filters.priority} onChange={e=>setFilters(f=>({...f,priority:e.target.value}))} className="input !w-auto !py-2"><option value="">All priorities</option><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="critical">Critical</option></select>
+        <select value={filters.isAutomated} onChange={e=>setFilters(f=>({...f,isAutomated:e.target.value}))} className="input !w-auto !py-2"><option value="">Manual+Automated</option><option value="true">Automated only</option><option value="false">Manual only</option></select>
+        <span className="text-xs text-slate-500 self-center ml-auto">Total: {meta.total}</span>
       </div>
 
-      <div className="bg-white border rounded-xl overflow-hidden">
+      <div className="card overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-left"><tr><th className="p-3">Code</th><th className="p-3">Title</th><th className="p-3">Module</th><th className="p-3">Priority</th><th className="p-3">Auto</th><th className="p-3">Status</th><th className="p-3">Actions</th></tr></thead>
+          <thead><tr><th>Code</th><th>Title</th><th>Module</th><th>Priority</th><th>Auto</th><th>Status</th><th>Actions</th></tr></thead>
           <tbody>
-            {loading ? <tr><td colSpan={7} className="p-6 text-center">Loading...</td></tr> :
+            {loading ? <tr><td colSpan={7} className="p-6 text-center text-slate-400">Loading…</td></tr> :
               data.map(tc => (
-                <tr key={tc.id} className="border-t hover:bg-slate-50">
-                  <td className="p-3 font-mono text-xs">{tc.code}</td>
-                  <td className="p-3"><div className="font-medium">{tc.title}</div><div className="text-xs text-slate-500">{tc.requirementCode ? `${tc.requirementCode} • ` : ''}{tc.steps?.length || 0} steps</div></td>
-                  <td className="p-3"><span className="badge bg-slate-100 text-slate-700">{tc.module}</span></td>
-                  <td className="p-3"><PriorityBadge priority={tc.priority} /></td>
-                  <td className="p-3">{tc.isAutomated ? '🤖' : '—'}</td>
-                  <td className="p-3">{tc.latestStatus ? <StatusBadge status={tc.latestStatus} /> : <span className="text-xs text-slate-400">—</span>}</td>
-                  <td className="p-3 flex gap-1"><button onClick={()=>openEdit(tc)} className="px-2 py-1 bg-slate-100 rounded text-xs">Edit</button>{isLead && <button onClick={()=>remove(tc)} className="px-2 py-1 bg-red-50 text-red-600 rounded text-xs">Deactivate</button>}</td>
+                <tr key={tc.id}>
+                  <td className="font-mono text-xs">{tc.code}</td>
+                  <td><div className="font-medium">{tc.title}</div><div className="text-xs text-slate-500">{tc.requirementCode ? `${tc.requirementCode} • ` : ''}{tc.steps?.length || 0} steps</div></td>
+                  <td><span className="badge bg-slate-100 text-slate-700">{tc.module}</span></td>
+                  <td><PriorityBadge priority={tc.priority} /></td>
+                  <td>{tc.isAutomated ? '🤖' : '—'}</td>
+                  <td>{tc.latestStatus ? <StatusBadge status={tc.latestStatus} /> : <span className="text-xs text-slate-400">—</span>}</td>
+                  <td><div className="flex gap-1.5"><button onClick={()=>openEdit(tc)} className="btn !py-1 !px-2.5 !text-xs">Edit</button>{isLead && <button onClick={()=>remove(tc)} className="btn !py-1 !px-2.5 !text-xs !bg-rose-50 !text-rose-600 hover:!bg-rose-100">Deactivate</button>}</div></td>
                 </tr>
               ))}
           </tbody>
         </table>
-        <div className="p-3 flex justify-between text-xs"><span>Page {meta.page} / {meta.totalPages}</span><div className="flex gap-2"><button disabled={meta.page<=1} onClick={()=>load(meta.page-1)} className="px-2 py-1 border rounded disabled:opacity-50">Prev</button><button disabled={meta.page>=meta.totalPages} onClick={()=>load(meta.page+1)} className="px-2 py-1 border rounded disabled:opacity-50">Next</button></div></div>
+        <div className="p-3 flex justify-between text-xs border-t border-slate-100"><span>Page {meta.page} / {meta.totalPages}</span><div className="flex gap-2"><button disabled={meta.page<=1} onClick={()=>load(meta.page-1)} className="btn btn-soft !py-1 !px-2.5 !text-xs disabled:opacity-50">Prev</button><button disabled={meta.page>=meta.totalPages} onClick={()=>load(meta.page+1)} className="btn btn-soft !py-1 !px-2.5 !text-xs disabled:opacity-50">Next</button></div></div>
       </div>
 
       {showForm && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-          <form onSubmit={submit} className="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-auto space-y-3">
+          <form onSubmit={submit} className="card p-6 w-full max-w-2xl max-h-[90vh] overflow-auto space-y-3 shadow-pop">
             <h2 className="text-lg font-bold">{editing ? `Edit ${editing.code}` : 'New Test Case'}</h2>
-            <input required placeholder="Title" value={form.title} onChange={e=>setForm(f=>({...f,title:e.target.value}))} className="w-full border rounded-lg px-3 py-2" />
+            <input required placeholder="Title" value={form.title} onChange={e=>setForm(f=>({...f,title:e.target.value}))} className="input" />
             <div className="grid grid-cols-2 gap-3">
-              <input required placeholder="Module (e.g. Login)" value={form.module} onChange={e=>setForm(f=>({...f,module:e.target.value}))} className="border rounded-lg px-3 py-2" />
-              <select value={form.priority} onChange={e=>setForm(f=>({...f,priority:e.target.value}))} className="border rounded-lg px-3 py-2"><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="critical">Critical</option></select>
+              <input required placeholder="Module (e.g. Login)" value={form.module} onChange={e=>setForm(f=>({...f,module:e.target.value}))} className="input" />
+              <select value={form.priority} onChange={e=>setForm(f=>({...f,priority:e.target.value}))} className="input"><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="critical">Critical</option></select>
             </div>
-            <textarea placeholder="Preconditions" value={form.preconditions} onChange={e=>setForm(f=>({...f,preconditions:e.target.value}))} className="w-full border rounded-lg px-3 py-2" rows={2} />
-            <textarea required placeholder="Expected result" value={form.expectedResult} onChange={e=>setForm(f=>({...f,expectedResult:e.target.value}))} className="w-full border rounded-lg px-3 py-2" rows={2} />
-            <div className="flex gap-3"><label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.isAutomated} onChange={e=>setForm(f=>({...f,isAutomated:e.target.checked}))} /> Automated</label><input placeholder="Requirement ID (optional)" value={form.requirementId} onChange={e=>setForm(f=>({...f,requirementId:e.target.value}))} className="border rounded-lg px-3 py-1.5 text-sm w-40" /></div>
+            <textarea placeholder="Preconditions" value={form.preconditions} onChange={e=>setForm(f=>({...f,preconditions:e.target.value}))} className="input" rows={2} />
+            <textarea required placeholder="Expected result" value={form.expectedResult} onChange={e=>setForm(f=>({...f,expectedResult:e.target.value}))} className="input" rows={2} />
+            <div className="flex gap-3"><label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.isAutomated} onChange={e=>setForm(f=>({...f,isAutomated:e.target.checked}))} /> Automated</label><input placeholder="Requirement ID (optional)" value={form.requirementId} onChange={e=>setForm(f=>({...f,requirementId:e.target.value}))} className="input !w-40 !py-2 !text-sm" /></div>
             <div>
               <div className="text-sm font-medium mb-1">Steps</div>
-              {form.steps.map((s,i)=><div key={i} className="flex gap-2 mb-2"><span className="text-xs mt-2">{i+1}.</span><input value={s.action} onChange={e=>{ const ns=[...form.steps]; ns[i].action=e.target.value; setForm(f=>({...f,steps:ns})); }} placeholder={`Step ${i+1} action`} className="flex-1 border rounded-lg px-3 py-1.5 text-sm" /><button type="button" onClick={()=>setForm(f=>({...f,steps:f.steps.filter((_,idx)=>idx!==i)}))} className="text-xs text-red-600">✕</button></div>)}
-              <button type="button" onClick={()=>setForm(f=>({...f,steps:[...f.steps,{action:''}]}))} className="text-xs px-2 py-1 bg-slate-100 rounded">+ Add step</button>
+              {form.steps.map((s,i)=><div key={i} className="flex gap-2 mb-2"><span className="text-xs mt-2">{i+1}.</span><input value={s.action} onChange={e=>{ const ns=[...form.steps]; ns[i].action=e.target.value; setForm(f=>({...f,steps:ns})); }} placeholder={`Step ${i+1} action`} className="input flex-1 !py-2 !text-sm" /><button type="button" onClick={()=>setForm(f=>({...f,steps:f.steps.filter((_,idx)=>idx!==i)}))} className="text-xs text-red-600">✕</button></div>)}
+              <button type="button" onClick={()=>setForm(f=>({...f,steps:[...f.steps,{action:''}]}))} className="btn btn-soft !py-1 !px-2.5 !text-xs">+ Add step</button>
             </div>
-            <div className="flex justify-end gap-2"><button type="button" onClick={()=>setShowForm(false)} className="px-4 py-2 border rounded-lg text-sm">Cancel</button><button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm">{editing ? 'Update' : 'Create'}</button></div>
+            <div className="flex justify-end gap-2 pt-1"><button type="button" onClick={()=>setShowForm(false)} className="btn btn-soft">Cancel</button><button type="submit" className="btn btn-primary">{editing ? 'Update' : 'Create'}</button></div>
           </form>
         </div>
       )}

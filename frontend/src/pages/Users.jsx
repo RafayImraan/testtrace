@@ -26,23 +26,29 @@ export default function Users() {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center"><h1 className="text-2xl font-bold">Users (Admin)</h1><button onClick={()=>{ setEditing(null); setForm({ email: '', password: '', fullName: '', role: 'tester' }); setShowForm(true); }} className="px-3 py-1.5 bg-indigo-600 text-white rounded text-sm">+ New User</button></div>
-      <div className="bg-white border rounded-xl overflow-hidden">
-        <table className="w-full text-sm"><thead className="bg-slate-50"><tr><th className="p-3 text-left">ID</th><th className="p-3 text-left">Name</th><th className="p-3 text-left">Email</th><th className="p-3">Role</th><th className="p-3">Active</th><th className="p-3">Actions</th></tr></thead>
-          <tbody>{users.map(u=><tr key={u.id} className="border-t"><td className="p-3">{u.id}</td><td className="p-3">{u.fullName}</td><td className="p-3">{u.email}</td><td className="p-3"><span className="badge bg-slate-100">{u.role}</span></td><td className="p-3">{u.isActive ? '✅' : '❌'}</td><td className="p-3 flex gap-1"><button onClick={()=>openEdit(u)} className="px-2 py-1 bg-slate-100 rounded text-xs">Edit</button><button onClick={()=>deactivate(u)} className="px-2 py-1 bg-red-50 text-red-600 rounded text-xs">Deactivate</button></td></tr>)}</tbody>
+      <div className="flex flex-wrap justify-between items-center gap-3">
+        <div>
+          <h1 className="page-title">Users</h1>
+          <p className="page-sub">Accounts &amp; role assignment</p>
+        </div>
+        <button onClick={()=>{ setEditing(null); setForm({ email: '', password: '', fullName: '', role: 'tester' }); setShowForm(true); }} className="btn btn-primary">+ New User</button>
+      </div>
+      <div className="card overflow-hidden">
+        <table className="w-full text-sm"><thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Role</th><th>Active</th><th>Actions</th></tr></thead>
+          <tbody>{users.map(u=><tr key={u.id}><td>{u.id}</td><td>{u.fullName}</td><td>{u.email}</td><td><span className="badge bg-slate-100">{u.role}</span></td><td>{u.isActive ? '✅' : '❌'}</td><td><div className="flex gap-1.5"><button onClick={()=>openEdit(u)} className="btn !py-1 !px-2.5 !text-xs">Edit</button><button onClick={()=>deactivate(u)} className="btn !py-1 !px-2.5 !text-xs !bg-rose-50 !text-rose-600 hover:!bg-rose-100">Deactivate</button></div></td></tr>)}</tbody>
         </table>
       </div>
 
       {showForm && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-          <form onSubmit={submit} className="bg-white rounded-xl p-6 w-full max-w-md space-y-3">
-            <h3 className="font-bold">{editing ? `Edit ${editing.fullName}` : 'New User'}</h3>
-            <input required placeholder="Full name" value={form.fullName} onChange={e=>setForm(f=>({...f,fullName:e.target.value}))} className="w-full border rounded px-3 py-2" />
-            <input required placeholder="Email" value={form.email} onChange={e=>setForm(f=>({...f,email:e.target.value}))} className="w-full border rounded px-3 py-2" />
-            {!editing && <input required type="password" placeholder="Password" value={form.password} onChange={e=>setForm(f=>({...f,password:e.target.value}))} className="w-full border rounded px-3 py-2" />}
-            <select value={form.role} onChange={e=>setForm(f=>({...f,role:e.target.value}))} className="w-full border rounded px-3 py-2"><option value="admin">Admin</option><option value="lead">Lead</option><option value="tester">Tester</option></select>
+          <form onSubmit={submit} className="card p-6 w-full max-w-md space-y-3 shadow-pop">
+            <h3 className="font-bold text-lg">{editing ? `Edit ${editing.fullName}` : 'New User'}</h3>
+            <input required placeholder="Full name" value={form.fullName} onChange={e=>setForm(f=>({...f,fullName:e.target.value}))} className="input" />
+            <input required placeholder="Email" value={form.email} onChange={e=>setForm(f=>({...f,email:e.target.value}))} className="input" />
+            {!editing && <input required type="password" placeholder="Password" value={form.password} onChange={e=>setForm(f=>({...f,password:e.target.value}))} className="input" />}
+            <select value={form.role} onChange={e=>setForm(f=>({...f,role:e.target.value}))} className="input"><option value="admin">Admin</option><option value="lead">Lead</option><option value="tester">Tester</option></select>
             {editing && <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={!!form.isActive} onChange={e=>setForm(f=>({...f,isActive:e.target.checked}))} /> Active</label>}
-            <div className="flex justify-end gap-2"><button type="button" onClick={()=>setShowForm(false)} className="px-4 py-2 border rounded">Cancel</button><button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded">{editing ? 'Update' : 'Create'}</button></div>
+            <div className="flex justify-end gap-2 pt-1"><button type="button" onClick={()=>setShowForm(false)} className="btn btn-soft">Cancel</button><button type="submit" className="btn btn-primary">{editing ? 'Update' : 'Create'}</button></div>
           </form>
         </div>
       )}

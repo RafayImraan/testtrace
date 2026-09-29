@@ -37,23 +37,30 @@ export default function MyTasks() {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center"><h1 className="text-2xl font-bold">My Tasks</h1><select value={filter} onChange={e=>setFilter(e.target.value)} className="border rounded-lg px-3 py-1.5 text-sm"><option value="all">All</option><option value="pending">Pending</option><option value="in_progress">In Progress</option><option value="failed">Failed</option><option value="blocked">Blocked</option></select></div>
+      <div className="flex flex-wrap justify-between items-center gap-3">
+        <div>
+          <h1 className="page-title">My Tasks</h1>
+          <p className="page-sub">Cycle tests assigned to you</p>
+        </div>
+        <select value={filter} onChange={e=>setFilter(e.target.value)} className="input !w-auto !py-2"><option value="all">All</option><option value="pending">Pending</option><option value="in_progress">In Progress</option><option value="failed">Failed</option><option value="blocked">Blocked</option></select>
+      </div>
 
-      <div className="bg-white border rounded-xl overflow-hidden">
-        <table className="w-full text-sm"><thead className="bg-slate-50"><tr><th className="p-2 text-left">Code</th><th className="p-2 text-left">Title</th><th className="p-2">Cycle</th><th className="p-2">Status</th><th className="p-2">Due</th><th className="p-2">Actions</th></tr></thead>
-          <tbody>{tasks.map(t=><tr key={t.id} className={`border-t ${t.overdue ? 'bg-red-50' : ''}`}><td className="p-2 font-mono text-xs">{t.testCaseCode}</td><td className="p-2">{t.title}</td><td className="p-2 text-xs">{t.cycleName}</td><td className="p-2"><span className={`badge badge-${t.status}`}>{t.status}</span>{t.overdue && <span className="ml-1 badge badge-failed">Overdue</span>}</td><td className="p-2 text-xs">{t.dueDate ? new Date(t.dueDate).toISOString().slice(0,10) : '—'}</td><td className="p-2 flex gap-1"><button onClick={()=>submitStatus(t,'in_progress')} className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs">In Progress</button><button onClick={()=>openExecute(t)} className="px-2 py-1 bg-indigo-600 text-white rounded text-xs">Execute</button></td></tr>)}</tbody>
+      <div className="card overflow-hidden">
+        <table className="w-full text-sm"><thead><tr><th>Code</th><th>Title</th><th>Cycle</th><th>Status</th><th>Due</th><th>Actions</th></tr></thead>
+          <tbody>{tasks.map(t=><tr key={t.id} className={t.overdue ? 'bg-rose-50/70' : ''}><td className="font-mono text-xs">{t.testCaseCode}</td><td>{t.title}</td><td className="text-xs">{t.cycleName}</td><td><span className={`badge badge-${t.status}`}>{t.status?.replace('_',' ')}</span>{t.overdue && <span className="ml-1 badge badge-failed">Overdue</span>}</td><td className="text-xs">{t.dueDate ? new Date(t.dueDate).toISOString().slice(0,10) : '—'}</td><td><div className="flex gap-1.5"><button onClick={()=>submitStatus(t,'in_progress')} className="btn !py-1 !px-2.5 !text-xs !bg-sky-50 !text-sky-700 hover:!bg-sky-100">In Progress</button><button onClick={()=>openExecute(t)} className="btn btn-primary !py-1 !px-2.5 !text-xs">Execute</button></div></td></tr>)}
+          {tasks.length===0 && <tr><td colSpan={6} className="py-12 text-center"><div className="text-3xl">📋</div><div className="mt-2 text-sm font-medium text-slate-600">No tasks {filter!=='all' ? `with status "${filter}"` : 'assigned to you'}</div><div className="text-xs text-slate-400 mt-1">{filter!=='all' ? 'Try a different filter.' : 'Tasks assigned by a lead show up here — demo with tester1@tta.local / Tester@123.'}</div></td></tr>}</tbody>
         </table>
       </div>
 
       {executing && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-          <form onSubmit={submitExecute} className="bg-white rounded-xl p-6 w-full max-w-lg space-y-3">
-            <h3 className="font-bold">Execute {executing.testCaseCode}</h3>
-            <select value={execForm.status} onChange={e=>setExecForm(f=>({...f,status:e.target.value}))} className="w-full border rounded px-3 py-2"><option value="pending">Pending</option><option value="in_progress">In Progress</option><option value="passed">Passed</option><option value="failed">Failed</option><option value="blocked">Blocked</option></select>
-            <textarea placeholder="Actual result" value={execForm.actualResult} onChange={e=>setExecForm(f=>({...f,actualResult:e.target.value}))} className="w-full border rounded px-3 py-2" rows={2} />
-            <textarea placeholder="Remarks" value={execForm.remarks} onChange={e=>setExecForm(f=>({...f,remarks:e.target.value}))} className="w-full border rounded px-3 py-2" rows={2} />
+          <form onSubmit={submitExecute} className="card p-6 w-full max-w-lg space-y-3 shadow-pop">
+            <h3 className="font-bold text-lg">Execute {executing.testCaseCode}</h3>
+            <select value={execForm.status} onChange={e=>setExecForm(f=>({...f,status:e.target.value}))} className="input"><option value="pending">Pending</option><option value="in_progress">In Progress</option><option value="passed">Passed</option><option value="failed">Failed</option><option value="blocked">Blocked</option></select>
+            <textarea placeholder="Actual result" value={execForm.actualResult} onChange={e=>setExecForm(f=>({...f,actualResult:e.target.value}))} className="input" rows={2} />
+            <textarea placeholder="Remarks" value={execForm.remarks} onChange={e=>setExecForm(f=>({...f,remarks:e.target.value}))} className="input" rows={2} />
             <input type="file" accept="image/*" onChange={e=>setFile(e.target.files[0])} className="w-full text-sm" />
-            <div className="flex justify-end gap-2"><button type="button" onClick={()=>setExecuting(null)} className="px-4 py-2 border rounded">Cancel</button><button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded">Submit</button></div>
+            <div className="flex justify-end gap-2 pt-1"><button type="button" onClick={()=>setExecuting(null)} className="btn btn-soft">Cancel</button><button type="submit" className="btn btn-primary">Submit</button></div>
           </form>
         </div>
       )}

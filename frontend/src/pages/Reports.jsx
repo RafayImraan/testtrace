@@ -11,13 +11,16 @@ export default function Reports() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Reports</h1>
-      <div className="bg-white border rounded-xl p-4 flex gap-3 items-center">
-        <select value={selected} onChange={e=>setSelected(e.target.value)} className="border rounded px-3 py-1.5 text-sm">{cycles.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select>
-        <a href={selected ? `${API_BASE}/api/reports/cycle/${selected}.pdf` : '#'} target="_blank" className="px-3 py-1.5 bg-red-600 text-white rounded text-sm">Download PDF</a>
-        <a href={selected ? `${API_BASE}/api/reports/cycle/${selected}.xlsx` : '#'} target="_blank" className="px-3 py-1.5 bg-green-600 text-white rounded text-sm">Download Excel</a>
+      <div>
+        <h1 className="page-title">Reports</h1>
+        <p className="page-sub">Export cycle results as PDF or Excel</p>
       </div>
-      <div className="bg-white border rounded-xl p-6 text-sm text-slate-600">
+      <div className="card p-4 flex flex-wrap gap-3 items-center">
+        <select value={selected} onChange={e=>setSelected(e.target.value)} className="input !w-auto !py-2">{cycles.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select>
+        <a href={selected ? `${API_BASE}/api/reports/cycle/${selected}.pdf` : '#'} target="_blank" className="btn btn-danger">Download PDF</a>
+        <a href={selected ? `${API_BASE}/api/reports/cycle/${selected}.xlsx` : '#'} target="_blank" className="btn btn-success">Download Excel</a>
+      </div>
+      <div className="card p-6 text-sm text-slate-600 leading-relaxed">
         <p>PDF contains summary, pass/fail counts and list of tests with status, assignee, remarks.</p>
         <p className="mt-2">Excel contains 3 sheets: Summary, Test Cases (detailed), Executions (last 100).</p>
         <p className="mt-2">Backend uses pdfkit and exceljs. Reports are generated on the fly and audit-logged.</p>

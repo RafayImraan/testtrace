@@ -77,9 +77,14 @@ export default function Cycles() {
   };
 
   return (
-    <div className="flex gap-6 h-[calc(100vh-120px)]">
-      <div className="w-80 bg-white border rounded-xl p-4 overflow-auto">
-        <div className="flex justify-between items-center mb-3"><h2 className="font-bold">Cycles</h2>{isLead && <button onClick={()=>setShowForm(true)} className="text-xs px-2 py-1 bg-indigo-600 text-white rounded">+ New</button>}</div>
+    <div className="space-y-4">
+      <div>
+        <h1 className="page-title">Test Cycles</h1>
+        <p className="page-sub">Plan, assign and run cycles — pick a cycle on the left</p>
+      </div>
+      <div className="flex gap-6 h-[calc(100vh-170px)]">
+      <div className="card w-80 p-4 overflow-auto">
+        <div className="flex justify-between items-center mb-3"><h2 className="font-bold">Cycles</h2>{isLead && <button onClick={()=>setShowForm(true)} className="btn btn-primary !py-1 !px-2.5 !text-xs">+ New</button>}</div>
         <div className="space-y-2">
           {cycles.map(c => (
             <div key={c.id} onClick={()=>loadDetail(c.id)} className={`p-3 rounded-lg border cursor-pointer ${selected?.id===c.id ? 'bg-indigo-50 border-indigo-200' : 'hover:bg-slate-50'}`}>
@@ -91,21 +96,21 @@ export default function Cycles() {
         </div>
       </div>
 
-      <div className="flex-1 bg-white border rounded-xl p-4 overflow-auto">
+      <div className="card flex-1 p-4 overflow-auto">
         {!selected ? <div className="text-sm text-slate-500">Select a cycle</div> : (
           <div className="space-y-4">
-            <div className="flex justify-between"><div><h2 className="text-xl font-bold">{selected.name}</h2><div className="text-sm text-slate-500">{selected.description}</div><div className="text-xs mt-1">Status: {selected.status} • {selected.stats.total} tests • Pass rate {selected.stats.passRate}% • Overdue {selected.stats.overdue}</div></div><div className="flex gap-2"><Link to={`/kanban?cycleId=${selected.id}`} className="px-3 py-1.5 bg-slate-100 rounded text-sm">Kanban</Link><a href={`${API_BASE}/api/reports/cycle/${selected.id}.pdf`} target="_blank" className="px-3 py-1.5 bg-slate-100 rounded text-sm">PDF</a><a href={`${API_BASE}/api/reports/cycle/${selected.id}.xlsx`} target="_blank" className="px-3 py-1.5 bg-slate-100 rounded text-sm">Excel</a></div></div>
+            <div className="flex justify-between"><div><h2 className="text-xl font-bold">{selected.name}</h2><div className="text-sm text-slate-500">{selected.description}</div><div className="text-xs mt-1">Status: {selected.status} • {selected.stats.total} tests • Pass rate {selected.stats.passRate}% • Overdue {selected.stats.overdue}</div></div><div className="flex gap-2"><Link to={`/kanban?cycleId=${selected.id}`} className="btn btn-soft !py-1.5">Kanban</Link><a href={`${API_BASE}/api/reports/cycle/${selected.id}.pdf`} target="_blank" className="btn btn-soft !py-1.5">PDF</a><a href={`${API_BASE}/api/reports/cycle/${selected.id}.xlsx`} target="_blank" className="btn btn-soft !py-1.5">Excel</a></div></div>
 
             {isLead && (
               <div className="p-3 bg-slate-50 rounded-lg space-y-3">
-                <div className="flex gap-2"><input placeholder="Add test case IDs comma separated e.g. 1,2,3" value={addTestIds} onChange={e=>setAddTestIds(e.target.value)} className="flex-1 border rounded px-2 py-1 text-sm" /><button onClick={addTests} className="px-3 py-1 bg-indigo-600 text-white rounded text-sm">Add</button><button onClick={runAllAutomated} className="px-3 py-1 bg-green-600 text-white rounded text-sm">Run all automated</button></div>
-                <div className="flex gap-2"><select value={assignForm.assigneeId} onChange={e=>setAssignForm(f=>({...f,assigneeId:e.target.value}))} className="border rounded px-2 py-1 text-sm"><option value="">Select assignee</option>{users.map(u=><option key={u.id} value={u.id}>{u.fullName} ({u.role})</option>)}</select><input type="date" value={assignForm.dueDate} onChange={e=>setAssignForm(f=>({...f,dueDate:e.target.value}))} className="border rounded px-2 py-1 text-sm" /><button onClick={assign} className="px-3 py-1 bg-blue-600 text-white rounded text-sm">Assign selected</button><button onClick={runAutomation} className="px-3 py-1 bg-purple-600 text-white rounded text-sm">Run automation selected</button></div>
+                <div className="flex gap-2 flex-wrap"><input placeholder="Add test case IDs comma separated e.g. 1,2,3" value={addTestIds} onChange={e=>setAddTestIds(e.target.value)} className="input flex-1 !py-2" /><button onClick={addTests} className="btn btn-primary !py-2">Add</button><button onClick={runAllAutomated} className="btn btn-success !py-2">Run all automated</button></div>
+                <div className="flex gap-2 flex-wrap"><select value={assignForm.assigneeId} onChange={e=>setAssignForm(f=>({...f,assigneeId:e.target.value}))} className="input !w-auto !py-2"><option value="">Select assignee</option>{users.map(u=><option key={u.id} value={u.id}>{u.fullName} ({u.role})</option>)}</select><input type="date" value={assignForm.dueDate} onChange={e=>setAssignForm(f=>({...f,dueDate:e.target.value}))} className="input !w-auto !py-2" /><button onClick={assign} className="btn btn-info !py-2">Assign selected</button><button onClick={runAutomation} className="btn btn-primary !py-2">Run automation selected</button></div>
               </div>
             )}
 
             <div className="overflow-auto">
-              <table className="w-full text-sm"><thead className="bg-slate-50"><tr><th className="p-2"><input type="checkbox" checked={selectedTests.size===tests.length && tests.length>0} onChange={e=>{ if(e.target.checked) setSelectedTests(new Set(tests.map(t=>t.id))); else setSelectedTests(new Set()); }} /></th><th className="p-2 text-left">Code</th><th className="p-2 text-left">Title</th><th className="p-2">Module</th><th className="p-2">Priority</th><th className="p-2">Status</th><th className="p-2">Assignee</th><th className="p-2">Due</th></tr></thead>
-                <tbody>{tests.map(t=><tr key={t.id} className="border-t hover:bg-slate-50"><td className="p-2"><input type="checkbox" checked={selectedTests.has(t.id)} onChange={e=>{ const ns=new Set(selectedTests); if(e.target.checked) ns.add(t.id); else ns.delete(t.id); setSelectedTests(ns); }} /></td><td className="p-2 font-mono text-xs">{t.test_case_code}</td><td className="p-2">{t.title}</td><td className="p-2 text-xs">{t.module}</td><td className="p-2"><span className={`badge badge-${t.priority}`}>{t.priority}</span></td><td className="p-2"><span className={`badge badge-${t.status}`}>{t.status}</span></td><td className="p-2 text-xs">{t.assignee_name||'—'}</td><td className="p-2 text-xs">{t.due_date ? new Date(t.due_date).toISOString().slice(0,10) : '—'}</td></tr>)}</tbody>
+              <table className="w-full text-sm"><thead><tr><th><input type="checkbox" checked={selectedTests.size===tests.length && tests.length>0} onChange={e=>{ if(e.target.checked) setSelectedTests(new Set(tests.map(t=>t.id))); else setSelectedTests(new Set()); }} /></th><th>Code</th><th>Title</th><th>Module</th><th>Priority</th><th>Status</th><th>Assignee</th><th>Due</th></tr></thead>
+                <tbody>{tests.map(t=><tr key={t.id}><td><input type="checkbox" checked={selectedTests.has(t.id)} onChange={e=>{ const ns=new Set(selectedTests); if(e.target.checked) ns.add(t.id); else ns.delete(t.id); setSelectedTests(ns); }} /></td><td className="font-mono text-xs">{t.test_case_code}</td><td>{t.title}</td><td className="text-xs">{t.module}</td><td><span className={`badge badge-${t.priority}`}>{t.priority}</span></td><td><span className={`badge badge-${t.status}`}>{t.status}</span></td><td className="text-xs">{t.assignee_name||'—'}</td><td className="text-xs">{t.due_date ? new Date(t.due_date).toISOString().slice(0,10) : '—'}</td></tr>)}</tbody>
               </table>
             </div>
           </div>
@@ -114,16 +119,17 @@ export default function Cycles() {
 
       {showForm && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-          <form onSubmit={createCycle} className="bg-white rounded-xl p-6 w-full max-w-lg space-y-3">
-            <h3 className="font-bold">New Cycle</h3>
-            <input required placeholder="Name" value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} className="w-full border rounded px-3 py-2" />
-            <textarea placeholder="Description" value={form.description} onChange={e=>setForm(f=>({...f,description:e.target.value}))} className="w-full border rounded px-3 py-2" rows={2} />
-            <div className="grid grid-cols-2 gap-3"><select value={form.status} onChange={e=>setForm(f=>({...f,status:e.target.value}))} className="border rounded px-3 py-2"><option value="planned">Planned</option><option value="active">Active</option><option value="completed">Completed</option></select><label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.scheduleEnabled} onChange={e=>setForm(f=>({...f,scheduleEnabled:e.target.checked}))} /> Nightly automation</label></div>
-            <div className="grid grid-cols-2 gap-3"><input type="date" value={form.startDate} onChange={e=>setForm(f=>({...f,startDate:e.target.value}))} className="border rounded px-3 py-2" /><input type="date" value={form.endDate} onChange={e=>setForm(f=>({...f,endDate:e.target.value}))} className="border rounded px-3 py-2" /></div>
-            <div className="flex justify-end gap-2"><button type="button" onClick={()=>setShowForm(false)} className="px-4 py-2 border rounded">Cancel</button><button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded">Create</button></div>
+          <form onSubmit={createCycle} className="card p-6 w-full max-w-lg space-y-3 shadow-pop">
+            <h3 className="font-bold text-lg">New Cycle</h3>
+            <input required placeholder="Name" value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} className="input" />
+            <textarea placeholder="Description" value={form.description} onChange={e=>setForm(f=>({...f,description:e.target.value}))} className="input" rows={2} />
+            <div className="grid grid-cols-2 gap-3"><select value={form.status} onChange={e=>setForm(f=>({...f,status:e.target.value}))} className="input"><option value="planned">Planned</option><option value="active">Active</option><option value="completed">Completed</option></select><label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.scheduleEnabled} onChange={e=>setForm(f=>({...f,scheduleEnabled:e.target.checked}))} /> Nightly automation</label></div>
+            <div className="grid grid-cols-2 gap-3"><input type="date" value={form.startDate} onChange={e=>setForm(f=>({...f,startDate:e.target.value}))} className="input" /><input type="date" value={form.endDate} onChange={e=>setForm(f=>({...f,endDate:e.target.value}))} className="input" /></div>
+            <div className="flex justify-end gap-2 pt-1"><button type="button" onClick={()=>setShowForm(false)} className="btn btn-soft">Cancel</button><button type="submit" className="btn btn-primary">Create</button></div>
           </form>
         </div>
       )}
+      </div>
     </div>
   );
 }
