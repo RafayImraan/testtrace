@@ -79,6 +79,8 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+      frontend:
+        condition: service_started
       sample-app:
         condition: service_started
     environment:
@@ -90,6 +92,8 @@ services:
       WORKER_POLL_INTERVAL_MS: ${WORKER_POLL_INTERVAL_MS:-3000}
       AUTOMATION_HEADLESS: "true"
       SAMPLE_APP_URL: http://sample-app:5000
+      FRONTEND_URL: http://frontend:80
+      TEST_PROJECT_ID: ${TEST_PROJECT_ID:-1}
     volumes:
       - uploads:/app/uploads
       - worker-artifacts:/app/worker/.artifacts

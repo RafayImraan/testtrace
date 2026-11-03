@@ -28,6 +28,7 @@ const shape = (tc, steps = []) => ({
   // enriched fields from latest cycle_test if present
   latestStatus: tc.latest_status || null,
   latestCycleId: tc.latest_cycle_id || null,
+  latestCycleTestId: tc.latest_cycle_test_id || null,
   latestAssigneeId: tc.latest_assignee_id || null,
 });
 
@@ -72,15 +73,16 @@ const list = asyncHandler(async (req, res) => {
 
   const dataSql = `
     SELECT tc.*, r.code AS requirement_code, r.title AS requirement_title,
-           latest.status AS latest_status, latest.cycle_id AS latest_cycle_id, latest.assignee_id AS latest_assignee_id
+           latest.status AS latest_status, latest.cycle_id AS latest_cycle_id,
+           latest.cycle_test_id AS latest_cycle_test_id, latest.assignee_id AS latest_assignee_id
     FROM test_cases tc
     LEFT JOIN requirements r ON r.id = tc.requirement_id
     LEFT JOIN LATERAL (
-      SELECT status, cycle_id, assignee_id FROM cycle_tests WHERE test_case_id = tc.id ORDER BY updated_at DESC LIMIT 1
+      SELECT id AS cycle_test_id, status, cycle_id, assignee_id FROM cycle_tests WHERE test_case_id = tc.id ORDER BY updated_at DESC LIMIT 1
     ) latest ON TRUE
     ${joinCycleTests}
     ${whereClause}
-    GROUP BY tc.id, r.code, r.title, latest.status, latest.cycle_id, latest.assignee_id
+    GROUP BY tc.id, r.code, r.title, latest.status, latest.cycle_id, latest.cycle_test_id, latest.assignee_id
     ORDER BY tc.id DESC
     LIMIT ${limit} OFFSET ${offset}
   `;

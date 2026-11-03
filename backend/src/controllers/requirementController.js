@@ -102,14 +102,30 @@ const matrix = asyncHandler(async (req, res) => {
             tc.id AS test_case_id, tc.code AS test_case_code, tc.title AS test_case_title, tc.priority AS test_case_priority, tc.is_automated,
             ct.id AS cycle_test_id, ct.cycle_id, c.name AS cycle_name, ct.status, ct.due_date, ct.remarks,
             u.full_name AS assignee,
-            le.execution_type, le.created_at AS last_executed_at
+            le.execution_type, le.created_at AS last_executed_at,
+            COALESCE(defect_links.items, '[]'::json) AS defects
      FROM requirements req
      LEFT JOIN test_cases tc ON tc.requirement_id = req.id
-     LEFT JOIN cycle_tests ct ON ct.test_case_id = tc.id ${cycleId ? 'AND ct.cycle_id = $1' : ''}
+     LEFT JOIN LATERAL (
+       SELECT ct0.* FROM cycle_tests ct0
+       ${cycleId ? 'WHERE ct0.test_case_id = tc.id AND ct0.cycle_id = $1' : 'WHERE ct0.test_case_id = tc.id'}
+       ORDER BY ct0.updated_at DESC, ct0.id DESC LIMIT 1
+     ) ct ON TRUE
      LEFT JOIN test_cycles c ON c.id = ct.cycle_id
      LEFT JOIN users u ON u.id = ct.assignee_id
      LEFT JOIN v_latest_execution le ON le.cycle_test_id = ct.id
-     ${cycleId ? '' : 'WHERE req.project_id = $1'}
+     LEFT JOIN LATERAL (
+       SELECT json_agg(json_build_object(
+         'id', d.id,
+         'code', 'DEF-' || lpad(d.id::text, 3, '0'),
+         'title', d.title,
+         'status', d.status,
+         'severity', d.severity
+       ) ORDER BY d.id) AS items
+       FROM defects d
+       WHERE d.requirement_id = req.id AND d.test_case_id = tc.id
+     ) defect_links ON TRUE
+     ${cycleId ? 'WHERE req.project_id = (SELECT project_id FROM test_cycles WHERE id = $1)' : 'WHERE req.project_id = $1'}
      ORDER BY req.code, tc.code`,
     params
   );
@@ -144,6 +160,7 @@ const matrix = asyncHandler(async (req, res) => {
         assignee: r.assignee,
         executionType: r.execution_type,
         lastExecutedAt: r.last_executed_at,
+        defects: r.defects || [],
       });
     }
   }

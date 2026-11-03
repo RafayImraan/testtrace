@@ -8,6 +8,7 @@ router.use('/auth', require('./auth'));
 router.use('/users', require('./users'));
 router.use('/projects', require('./projects'));
 router.use('/requirements', require('./requirements'));
+router.use('/defects', require('./defects'));
 router.use('/test-cases', require('./testCases'));
 router.use('/cycles', require('./cycles'));
 router.use('/cycle-tests', require('./cycleTests'));

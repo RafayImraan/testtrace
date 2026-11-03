@@ -1,13 +1,12 @@
 /**
- * API runner: executes plain Node.js scripts that use fetch/axios to test REST APIs.
- * No browser needed, fast and lightweight.
+ * API runner: executes API checks through Playwright's APIRequestContext.
  */
-const path = require('path');
-const axios = require('axios');
+const { request: playwrightRequest } = require('playwright');
 
 async function runApiScript(filePath, run, { sampleAppUrl, backendUrl } = {}) {
   const logs = [];
   const log = (msg) => { logs.push(`[${new Date().toISOString()}] ${msg}`); console.log(`[api:${run.id}] ${msg}`); };
+  const api = await playwrightRequest.newContext({ timeout: run.timeout_ms || 60000 });
 
   try {
     delete require.cache[require.resolve(filePath)];
@@ -15,7 +14,7 @@ async function runApiScript(filePath, run, { sampleAppUrl, backendUrl } = {}) {
     if (typeof userFn !== 'function') throw new Error(`Script ${run.file_path} does not export a function`);
 
     log(`Executing API script ${run.file_path} (SUT ${sampleAppUrl}, backend ${backendUrl})`);
-    const result = await userFn({ log, run, sampleAppUrl, backendUrl, axios });
+    const result = await userFn({ log, run, sampleAppUrl, backendUrl, request: api });
 
     if (!result || !result.status) throw new Error(`Script returned invalid result: ${JSON.stringify(result)}`);
 
@@ -32,6 +31,8 @@ async function runApiScript(filePath, run, { sampleAppUrl, backendUrl } = {}) {
       log: logs.join('\n') + `\n\nEXCEPTION: ${err.message}\n${err.stack || ''}`.slice(0, 8000),
       error: err.message,
     };
+  } finally {
+    await api.dispose();
   }
 }
 

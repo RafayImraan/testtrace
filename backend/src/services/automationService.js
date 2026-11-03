@@ -17,19 +17,51 @@ const { query, queryOne, tx } = require('../config/db');
 const { writeAudit } = require('../utils/audit');
 const realtime = require('./realtime');
 
-/** Check if a cron expression is due within the last minute (simple parser). */
-function isCronDue(cronExpr, lastRunAt) {
-  // For demo purposes we delegate to node-cron's validation but implement
-  // a trivial "every minute" and "daily at 02:00" check.
-  // The real scheduler runs every minute and only triggers if enough time
-  // has passed since last_scheduled_at (at least 23h for daily jobs).
+function isSupportedCron(cronExpr) {
+  return typeof cronExpr === 'string'
+    && cronExpr.trim().split(/\s+/).length === 5
+    && require('node-cron').validate(cronExpr);
+}
+
+function fieldMatches(expression, value, min, max) {
+  return expression.split(',').some((part) => {
+    const [rangePart, stepPart] = part.split('/');
+    const step = stepPart ? Number(stepPart) : 1;
+    if (!Number.isInteger(step) || step < 1) return false;
+    let start = min;
+    let end = max;
+    if (rangePart !== '*') {
+      const range = rangePart.split('-').map(Number);
+      if (range.length === 1) start = end = range[0];
+      else [start, end] = range;
+    }
+    if (start < min || end > max || start > end) return false;
+    return value >= start && value <= end && (value - start) % step === 0;
+  });
+}
+
+/** True only when the five-field cron expression matches the current minute. */
+function isCronDue(cronExpr, lastRunAt, now = new Date()) {
+  const fields = String(cronExpr || '').trim().split(/\s+/);
+  if (fields.length !== 5) return false;
+  const [minute, hour, day, month, weekday] = fields;
+  const cronDay = now.getDay();
+  const dayMatches = fieldMatches(day, now.getDate(), 1, 31);
+  const weekdayMatches = fieldMatches(weekday, cronDay, 0, 6) || (cronDay === 0 && fieldMatches(weekday, 7, 0, 7));
+  const dayWildcard = day === '*';
+  const weekdayWildcard = weekday === '*';
+  const calendarMatches = dayWildcard ? weekdayMatches : weekdayWildcard ? dayMatches : dayMatches || weekdayMatches;
+  if (!fieldMatches(minute, now.getMinutes(), 0, 59)
+      || !fieldMatches(hour, now.getHours(), 0, 23)
+      || !calendarMatches
+      || !fieldMatches(month, now.getMonth() + 1, 1, 12)) return false;
   if (!lastRunAt) return true;
-  const hoursSince = (Date.now() - new Date(lastRunAt).getTime()) / 3600000;
-  if (cronExpr === '0 2 * * *' || cronExpr.includes('2 * *')) {
-    return hoursSince >= 23;
-  }
-  // For other crons, require at least 1 hour since last run to avoid spam.
-  return hoursSince >= 1;
+  const last = new Date(lastRunAt);
+  return !(last.getFullYear() === now.getFullYear()
+    && last.getMonth() === now.getMonth()
+    && last.getDate() === now.getDate()
+    && last.getHours() === now.getHours()
+    && last.getMinutes() === now.getMinutes());
 }
 
 /** Cron job: enqueue automated tests for cycles whose schedule is enabled. */
@@ -54,6 +86,16 @@ async function triggerScheduledCycles() {
 
     if (!tests.rows.length) continue;
 
+    // Claim this matching minute before enqueueing so multiple backend replicas
+    // cannot schedule the same cycle twice.
+    const claimed = await queryOne(
+      `UPDATE test_cycles SET last_scheduled_at = now()
+       WHERE id = $1 AND (last_scheduled_at IS NULL OR last_scheduled_at < date_trunc('minute', now()))
+       RETURNING id`,
+      [cycle.id]
+    );
+    if (!claimed) continue;
+
     const batchId = await queueRuns({
       items: tests.rows.map((r) => ({
         scriptId: r.script_id,
@@ -65,7 +107,6 @@ async function triggerScheduledCycles() {
       triggeredBy: null,
     });
 
-    await query('UPDATE test_cycles SET last_scheduled_at = now() WHERE id = $1', [cycle.id]);
     console.log(`[automation] scheduled batch ${batchId} for cycle ${cycle.id} (${tests.rows.length} tests)`);
 
     await writeAudit({
@@ -254,4 +295,4 @@ async function ingestResult(runId, payload, { workerId = null, ip = null, userId
   });
 }
 
-module.exports = { queueRuns, triggerScheduledCycles, claimRuns, ingestResult, isCronDue };
+module.exports = { queueRuns, triggerScheduledCycles, claimRuns, ingestResult, isCronDue, isSupportedCron };

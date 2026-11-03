@@ -1,10 +1,9 @@
 /**
  * UI: Test the platform itself - login page loads.
- * Tries FRONTEND_URL first, then local dev server, then falls back to backend health.
+ * Verifies that the platform frontend's login page is reachable.
  */
-module.exports = async ({ page, backendUrl, log }) => {
-  const base = backendUrl || 'http://localhost:4000';
-  const candidates = [...new Set([process.env.FRONTEND_URL, 'http://localhost:5173'].filter(Boolean))];
+module.exports = async ({ page, frontendUrl, log }) => {
+  const candidates = [...new Set([frontendUrl, process.env.FRONTEND_URL, 'http://localhost:5173'].filter(Boolean))];
 
   for (const u of candidates) {
     try {
@@ -20,15 +19,5 @@ module.exports = async ({ page, backendUrl, log }) => {
     }
   }
 
-  try {
-    await page.goto(`${base}/api/health`, { waitUntil: 'domcontentloaded', timeout: 10000 });
-    const content = await page.textContent('body');
-    log(`Backend health: ${content?.slice(0, 200)}`);
-    if (content && content.includes('ok')) {
-      return { status: 'PASSED', log: `TTA backend health ok: ${content.slice(0, 100)}` };
-    }
-    return { status: 'FAILED', log: `Could not load TTA frontend nor backend health`, error: 'TTA not reachable' };
-  } catch (e) {
-    return { status: 'FAILED', log: `Could not load TTA frontend nor backend health: ${e.message}`, error: 'TTA not reachable' };
-  }
+  return { status: 'FAILED', log: 'Could not load the TTA login page from any configured frontend URL', error: 'TTA frontend not reachable' };
 };

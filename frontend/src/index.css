@@ -69,6 +69,13 @@ tbody tr:last-child{ @apply border-b-0; }
 .badge-medium{ @apply bg-sky-100 text-sky-700; }
 .badge-high{ @apply bg-orange-100 text-orange-800; }
 .badge-critical{ @apply bg-rose-100 text-rose-800; }
+.badge-minor{ @apply bg-slate-100 text-slate-700; }
+.badge-major{ @apply bg-amber-100 text-amber-800; }
+.badge-blocker{ @apply bg-red-200 text-red-900; }
+.badge-open{ @apply bg-blue-100 text-blue-800; }
+.badge-confirmed{ @apply bg-violet-100 text-violet-800; }
+.badge-fixed{ @apply bg-emerald-100 text-emerald-800; }
+.badge-closed{ @apply bg-slate-100 text-slate-600; }
 
 /* entrance animation for routed pages */
 .page-enter{ animation:fadeUp .45s cubic-bezier(.22,1,.36,1) both; }

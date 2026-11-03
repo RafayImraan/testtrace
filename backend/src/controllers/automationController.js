@@ -274,6 +274,7 @@ const listSchedules = asyncHandler(async (req, res) => {
 const saveSchedule = asyncHandler(async (req, res) => {
   const { cycleId, enabled, cron } = req.body;
   if (!cycleId) throw ApiError.badRequest('cycleId required');
+  if (cron && !automationService.isSupportedCron(cron)) throw ApiError.badRequest('Cron must be a valid five-field expression');
   const c = await queryOne('SELECT * FROM test_cycles WHERE id = $1', [cycleId]);
   if (!c) throw ApiError.notFound('Cycle not found');
   const updated = await queryOne(

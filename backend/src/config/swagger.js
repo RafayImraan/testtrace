@@ -51,6 +51,7 @@ REST API of the **Test Trace & Automate** platform.
     { name: 'Users' },
     { name: 'Projects' },
     { name: 'Requirements' },
+    { name: 'Defects' },
     { name: 'Test cases' },
     { name: 'Cycles' },
     { name: 'Dashboard' },
@@ -428,6 +429,30 @@ REST API of the **Test Trace & Automate** platform.
         tags: ['Requirements'], summary: 'Traceability matrix (requirement x test case x latest result)',
         parameters: [{ name: 'projectId', in: 'query', schema: { type: 'integer' } }, { name: 'cycleId', in: 'query', schema: { type: 'integer' } }],
         responses: { 200: ok('Matrix', { type: 'object', properties: { data: { type: 'array' }, summary: { type: 'object' } } }) },
+      },
+    },
+    '/api/defects': {
+      get: {
+        tags: ['Defects'], summary: 'List defects with requirement and test-case trace links',
+        parameters: [
+          { name: 'projectId', in: 'query', required: true, schema: { type: 'integer' } },
+          { name: 'status', in: 'query', schema: { type: 'string', enum: ['open', 'confirmed', 'fixed', 'closed'] } },
+          { name: 'severity', in: 'query', schema: { type: 'string', enum: ['minor', 'major', 'critical', 'blocker'] } },
+        ],
+        responses: { 200: ok('Defects and trace links') },
+      },
+      post: {
+        tags: ['Defects'], summary: 'Report a defect linked to a requirement and test case',
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['projectId', 'requirementId', 'testCaseId', 'title', 'description'], properties: { projectId: { type: 'integer' }, requirementId: { type: 'integer' }, testCaseId: { type: 'integer' }, cycleTestId: { type: 'integer' }, title: { type: 'string' }, description: { type: 'string' }, severity: { type: 'string', enum: ['minor', 'major', 'critical', 'blocker'] } } } } } },
+        responses: { 201: ok('Defect created with trace links'), ...errorResponses },
+      },
+    },
+    '/api/defects/{id}': {
+      patch: {
+        tags: ['Defects'], summary: 'Update defect status, severity, or assignee (admin/lead)',
+        parameters: [idParam()],
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', properties: { status: { type: 'string', enum: ['open', 'confirmed', 'fixed', 'closed'] }, severity: { type: 'string', enum: ['minor', 'major', 'critical', 'blocker'] }, assignedTo: { type: 'integer' } } } } } },
+        responses: { 200: ok('Defect updated'), ...errorResponses },
       },
     },
     '/api/test-cases': {

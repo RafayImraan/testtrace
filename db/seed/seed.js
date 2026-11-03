@@ -18,7 +18,7 @@ async function main() {
     await client.query('BEGIN');
     console.log('🧹  Clearing existing demo data...');
     await client.query(`
-      TRUNCATE executions, automation_runs, automation_scripts,
+      TRUNCATE executions, automation_runs, automation_scripts, defects,
                cycle_tests, test_case_steps, test_cases,
                test_cycles, requirements, projects,
                audit_logs, notifications
@@ -61,7 +61,7 @@ async function main() {
       )
     ).rows[0];
 
-    console.log('📋  Creating requirements (8)...');
+    console.log('📋  Creating requirements (9)...');
     const reqData = [
       { title: 'User Authentication', description: 'System shall allow users to register, login, logout, reset password and manage sessions securely.', priority: 'critical' },
       { title: 'Product Catalog & Search', description: 'Users can browse categories, search products, filter by price/brand and view product details.', priority: 'high' },
@@ -71,6 +71,7 @@ async function main() {
       { title: 'Automation Execution', description: 'Link test cases to Playwright/API scripts, queue runs, collect logs/screenshots and update results automatically.', priority: 'high' },
       { title: 'Reporting & Traceability', description: 'Traceability matrix REQ->TC->Result, dashboard charts, PDF/Excel export.', priority: 'medium' },
       { title: 'User & Role Management', description: 'Admin can manage users, roles, activation status; RBAC enforced on API and UI.', priority: 'medium' },
+      { title: 'Defect Tracking & Traceability', description: 'Defects retain links to the requirement and test case that exposed them, with status and severity tracking.', priority: 'high' },
     ];
     const requirements = [];
     for (const r of reqData) {
@@ -86,7 +87,7 @@ async function main() {
       requirements.push(inserted);
     }
 
-    console.log('🧪  Creating test cases (~40)...');
+    console.log('🧪  Creating test cases (44)...');
     const tcSeed = [
       { module: 'Login', title: 'Login with valid admin credentials', pre: 'User on /login page', exp: 'Redirect to dashboard, JWT issued', pri: 'critical', reqIdx: 0, auto: true },
       { module: 'Login', title: 'Login with invalid password shows error', pre: 'User on /login page', exp: 'Error toast "Invalid e-mail or password", no token', pri: 'high', reqIdx: 0, auto: true },
@@ -110,13 +111,15 @@ async function main() {
       { module: 'Checkout', title: 'Checkout fails when cart is empty', pre: 'Empty cart, go to /checkout', exp: 'Redirect to cart, error "Cart is empty"', pri: 'medium', reqIdx: 3, auto: false },
       { module: 'Checkout', title: 'Apply invalid coupon code shows error', pre: 'Checkout page', exp: 'Error "Invalid coupon"', pri: 'low', reqIdx: 3, auto: false },
       { module: 'Checkout', title: 'Order confirmation email content check (API)', pre: 'Order created via API', exp: 'API returns order with emailSent=true', pri: 'medium', reqIdx: 3, auto: true },
-      { module: 'Test Management', title: 'Create test case with valid data (Platform self-test)', pre: 'Lead logged in, on Test Cases page', exp: 'Test case created, appears in list, audit log entry', pri: 'critical', reqIdx: 4, auto: false },
+      { module: 'Test Management', title: 'Create test case with valid data (Platform self-test)', pre: 'Lead logged in, on Test Cases page', exp: 'Test case created, appears in list, audit log entry', pri: 'critical', reqIdx: 4, auto: true },
       { module: 'Test Management', title: 'Create test case without title fails validation', pre: 'Lead on create form', exp: '422 Validation error for title', pri: 'high', reqIdx: 4, auto: false },
       { module: 'Test Management', title: 'Edit test case priority and module', pre: 'Existing test case', exp: 'Updated fields persisted, updated_at changed', pri: 'medium', reqIdx: 4, auto: false },
       { module: 'Test Management', title: 'Search test cases by module filter', pre: 'Test Cases page with data', exp: 'Only matching module cases shown', pri: 'medium', reqIdx: 4, auto: false },
       { module: 'Test Management', title: 'Create test cycle and add test cases', pre: 'Lead on Cycles page', exp: 'Cycle created with selected cases, stats total>0', pri: 'critical', reqIdx: 4, auto: false },
       { module: 'Test Management', title: 'Assign test case in cycle to tester', pre: 'Cycle detail, test case row', exp: 'Assignee updated, notification sent, audit log', pri: 'high', reqIdx: 4, auto: false },
-      { module: 'Test Management', title: 'Tester updates own assigned test status to Passed', pre: 'Tester on My Tasks, assigned test', exp: 'Status changed to passed, execution history row created', pri: 'critical', reqIdx: 4, auto: false },
+      { module: 'Test Management', title: 'Tester updates own assigned test status to Passed', pre: 'Tester on My Tasks, assigned test', exp: 'Status changed to passed, execution history row created', pri: 'critical', reqIdx: 4, auto: true },
+      { module: 'Test Management', title: 'TTA login page is available', pre: 'Frontend service is running', exp: 'Platform login page loads in the browser', pri: 'high', reqIdx: 4, auto: true },
+      { module: 'Defects', title: 'Report defect linked to requirement and test case', pre: 'A requirement-linked test case exists', exp: 'Defect is saved with its requirement and test case trace links', pri: 'high', reqIdx: 8, auto: false },
       { module: 'Test Management', title: 'Tester cannot update unassigned test (RBAC)', pre: 'Tester tries PATCH /cycle-tests/xxx/status for unassigned', exp: '403 Forbidden', pri: 'high', reqIdx: 4, auto: true },
       { module: 'Test Management', title: 'Kanban drag-and-drop changes status', pre: 'Kanban board, pending card', exp: 'Card moves to In Progress, status updated via API', pri: 'medium', reqIdx: 4, auto: false },
       { module: 'Test Management', title: 'Upload screenshot on execution', pre: 'Execute test with screenshot', exp: 'Screenshot saved, path in execution record', pri: 'medium', reqIdx: 4, auto: false },
@@ -229,27 +232,43 @@ async function main() {
     await addCasesToCycle(cycle1, cycle1Cases);
     await addCasesToCycle(cycle2, cycle2Cases);
 
+    console.log('🐞  Creating linked sample defects...');
+    const sampleDefects = [
+      { caseTitle: 'Search with no results shows empty state', requirement: requirements[1], title: 'Empty search returns HTTP 500', description: 'Search for a product that does not exist. With BUG_MODE enabled, the catalog API returns a server error instead of an empty result.', severity: 'major' },
+      { caseTitle: 'Checkout with valid address and payment', requirement: requirements[3], title: 'Checkout FAIL coupon triggers server error', description: 'Submit checkout with coupon FAIL. The sample app returns HTTP 500 instead of a controlled invalid-coupon response.', severity: 'critical' },
+    ];
+    for (const defect of sampleDefects) {
+      const tc = testCases.find((item) => item.title === defect.caseTitle);
+      const ct = await client.query('SELECT id FROM cycle_tests WHERE cycle_id = $1 AND test_case_id = $2', [cycle1.id, tc.id]);
+      await client.query(
+        `INSERT INTO defects (project_id, requirement_id, test_case_id, cycle_test_id, title, description, severity, created_by)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+        [proj.id, defect.requirement.id, tc.id, ct.rows[0]?.id || null, defect.title, defect.description, defect.severity, leadId]
+      );
+    }
+
     console.log('🤖  Registering automation scripts...');
     const automatedCases = testCases.filter((tc) => tc.is_automated);
-    const scriptFiles = [
-      { file: 'ui/login-valid.js', type: 'ui', name: 'UI: Login valid' },
-      { file: 'ui/login-invalid.js', type: 'ui', name: 'UI: Login invalid' },
-      { file: 'ui/search-product.js', type: 'ui', name: 'UI: Search product' },
-      { file: 'ui/search-empty.js', type: 'ui', name: 'UI: Search empty' },
-      { file: 'ui/add-to-cart.js', type: 'ui', name: 'UI: Add to cart' },
-      { file: 'ui/checkout-valid.js', type: 'ui', name: 'UI: Checkout valid' },
-      { file: 'ui/tta-login.js', type: 'ui', name: 'UI: TTA Platform login' },
-      { file: 'ui/tta-create-testcase.js', type: 'ui', name: 'UI: TTA Create test case' },
-      { file: 'ui/tta-status-change.js', type: 'ui', name: 'UI: TTA Status change' },
-      { file: 'api/login-rate-limit.js', type: 'api', name: 'API: Rate limit' },
-      { file: 'api/checkout-api.js', type: 'api', name: 'API: Checkout' },
-      { file: 'api/auth-rbac.js', type: 'api', name: 'API: RBAC check' },
-      { file: 'api/failing-endpoint.js', type: 'api', name: 'API: Intentional failure' },
-    ];
+    const scriptByTitle = {
+      'Login with valid admin credentials': { file: 'ui/login-valid.js', type: 'ui', name: 'UI: Shop login valid' },
+      'Login with invalid password shows error': { file: 'ui/login-invalid.js', type: 'ui', name: 'UI: Shop login invalid' },
+      'Brute force protection rate limits login': { file: 'api/login-rate-limit.js', type: 'api', name: 'Playwright API: rate limit' },
+      'Search product by name returns results': { file: 'ui/search-product.js', type: 'ui', name: 'UI: Search product' },
+      'Search with no results shows empty state': { file: 'ui/search-empty.js', type: 'ui', name: 'UI: Search empty result' },
+      'Add product to cart increments count': { file: 'ui/add-to-cart.js', type: 'ui', name: 'UI: Add to cart' },
+      'Checkout with valid address and payment': { file: 'ui/checkout-valid.js', type: 'ui', name: 'UI: Checkout valid' },
+      'Order confirmation email content check (API)': { file: 'api/checkout-api.js', type: 'api', name: 'Playwright API: checkout' },
+      'Create test case with valid data (Platform self-test)': { file: 'ui/tta-create-testcase.js', type: 'ui', name: 'Playwright: TTA test case flow' },
+      'Tester updates own assigned test status to Passed': { file: 'ui/tta-status-change.js', type: 'ui', name: 'Playwright: TTA status flow' },
+      'TTA login page is available': { file: 'ui/tta-login.js', type: 'ui', name: 'UI: TTA login page' },
+      'Tester cannot update unassigned test (RBAC)': { file: 'api/auth-rbac.js', type: 'api', name: 'Playwright API: RBAC' },
+      'Failed automation captures screenshot and log': { file: 'api/failing-endpoint.js', type: 'api', name: 'Playwright API: intentional failure' },
+      'Worker crash/timeout recorded as FAILED': { file: 'api/intentional-crash.js', type: 'api', name: 'Playwright API: worker error handling' },
+    };
 
-    for (let i = 0; i < automatedCases.length && i < scriptFiles.length; i++) {
-      const tc = automatedCases[i];
-      const sf = scriptFiles[i];
+    for (const tc of automatedCases) {
+      const sf = scriptByTitle[tc.title];
+      if (!sf) throw new Error(`No automation script mapped to test case: ${tc.title}`);
       await client.query(
         `INSERT INTO automation_scripts (test_case_id, name, type, file_path, description, timeout_ms)
          VALUES ($1,$2,$3,$4,$5,60000)

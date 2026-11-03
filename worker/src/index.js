@@ -1,7 +1,7 @@
 /**
  * Automation Worker entry point.
  * Polls the backend queue every WORKER_POLL_INTERVAL_MS, claims up to 5 runs,
- * executes them (Playwright for UI, axios for API) and posts results back.
+ * executes UI and API checks through Playwright and posts results back with Axios.
  *
  * No Redis: Postgres is the queue (SELECT ... FOR UPDATE SKIP LOCKED).
  * No silent failures: every crash/timeout is recorded as FAILED with logs.
@@ -19,6 +19,7 @@ const config = {
   password: process.env.WORKER_PASSWORD || 'Lead@123',
   headless: String(process.env.AUTOMATION_HEADLESS || 'true') === 'true',
   sampleAppUrl: process.env.SAMPLE_APP_URL || 'http://localhost:5000',
+  frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
 };
 
 let token = null;
@@ -91,7 +92,7 @@ async function runOnce() {
     try {
       // Dynamic import of runner (ui vs api)
       const runner = require('./runner');
-      outcome = await runner.executeRun(run, { headless: config.headless, sampleAppUrl: config.sampleAppUrl, backendUrl: config.backendUrl });
+      outcome = await runner.executeRun(run, { headless: config.headless, sampleAppUrl: config.sampleAppUrl, backendUrl: config.backendUrl, frontendUrl: config.frontendUrl });
     } catch (err) {
       console.error(`[worker] run ${run.id} crashed:`, err.message);
       outcome = {

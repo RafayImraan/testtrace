@@ -15,6 +15,7 @@ import AuditLog from './pages/AuditLog';
 import Users from './pages/Users';
 import Notifications from './pages/Notifications';
 import Profile from './pages/Profile';
+import Defects from './pages/Defects';
 import { Toaster } from 'react-hot-toast';
 
 function Protected({ children, roles }) {
@@ -39,6 +40,7 @@ export default function App() {
           <Route path="/my-tasks" element={<Protected><MyTasks /></Protected>} />
           <Route path="/automation/*" element={<Protected><Automation /></Protected>} />
           <Route path="/requirements" element={<Protected><Requirements /></Protected>} />
+          <Route path="/defects" element={<Protected><Defects /></Protected>} />
           <Route path="/reports" element={<Protected><Reports /></Protected>} />
           <Route path="/audit" element={<Protected roles={['admin','lead']}><AuditLog /></Protected>} />
           <Route path="/users" element={<Protected roles={['admin']}><Users /></Protected>} />

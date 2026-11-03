@@ -8,7 +8,7 @@ const { chromium } = require('playwright');
 const path = require('path');
 const fs = require('fs');
 
-async function runUiScript(filePath, run, { headless = true, sampleAppUrl, backendUrl } = {}) {
+async function runUiScript(filePath, run, { headless = true, sampleAppUrl, backendUrl, frontendUrl } = {}) {
   const logs = [];
   const log = (msg) => { logs.push(`[${new Date().toISOString()}] ${msg}`); console.log(`[ui:${run.id}] ${msg}`); };
 
@@ -31,7 +31,7 @@ async function runUiScript(filePath, run, { headless = true, sampleAppUrl, backe
     if (typeof userFn !== 'function') throw new Error(`Script ${run.file_path} does not export a function`);
 
     log(`Executing ${run.file_path} against SUT ${sampleAppUrl} / backend ${backendUrl}`);
-    const result = await userFn({ page, context, browser, log, run, sampleAppUrl, backendUrl, headless });
+    const result = await userFn({ page, context, request: context.request, browser, log, run, sampleAppUrl, backendUrl, frontendUrl, headless });
 
     if (!result || !result.status) throw new Error(`Script ${run.file_path} returned invalid result: ${JSON.stringify(result)}`);
 

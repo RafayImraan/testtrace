@@ -5,6 +5,7 @@ const { query, queryOne, tx } = require('../config/db');
 const { ApiError, asyncHandler } = require('../middleware/error');
 const { writeAudit, clientIp } = require('../utils/audit');
 const realtime = require('../services/realtime');
+const automationService = require('../services/automationService');
 const { notify } = require('../services/notificationService');
 
 const statsForCycle = async (cycleId) => {
@@ -80,6 +81,7 @@ const get = asyncHandler(async (req, res) => {
 /** POST /api/cycles */
 const create = asyncHandler(async (req, res) => {
   const { projectId, name, description, status, startDate, endDate, scheduleEnabled, scheduleCron } = req.body;
+  if (scheduleCron && !automationService.isSupportedCron(scheduleCron)) throw ApiError.badRequest('Cron must be a valid five-field expression');
   const proj = await queryOne('SELECT id FROM projects WHERE id = $1', [projectId]);
   if (!proj) throw ApiError.badRequest('Project not found');
 
@@ -98,6 +100,7 @@ const update = asyncHandler(async (req, res) => {
   const before = await queryOne('SELECT * FROM test_cycles WHERE id = $1', [req.params.id]);
   if (!before) throw ApiError.notFound('Cycle not found');
   const { name, description, status, startDate, endDate, scheduleEnabled, scheduleCron } = req.body;
+  if (scheduleCron && !automationService.isSupportedCron(scheduleCron)) throw ApiError.badRequest('Cron must be a valid five-field expression');
   const c = await queryOne(
     `UPDATE test_cycles SET
        name = COALESCE($2, name),

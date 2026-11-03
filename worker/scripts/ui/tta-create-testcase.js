@@ -1,27 +1,30 @@
-/**
- * UI: TTA platform - create test case (self-test)
- * Simplified: just verifies the API endpoint for creating test cases works via UI fetch
- */
-module.exports = async ({ page, backendUrl, log }) => {
+/** Playwright API-assisted self-test: create and clean up a real TTA test case. */
+module.exports = async ({ page, request, backendUrl, log, run }) => {
   const base = backendUrl || 'http://localhost:4000';
   await page.goto(`${base}/api/health`);
   const health = await page.textContent('body');
-  log(`Health check before create TC: ${health?.slice(0,100)}`);
-  // Simulate API call from browser context
-  const result = await page.evaluate(async (backendUrl) => {
-    try {
-      const res = await fetch(`${backendUrl}/api/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: 'lead@tta.local', password: 'Lead@123' })
-      });
-      const data = await res.json();
-      return { ok: res.ok, data };
-    } catch (e) { return { ok: false, error: e.message }; }
-  }, base);
-  log(`Login attempt from browser: ${JSON.stringify(result).slice(0,300)}`);
-  if (result.ok && result.data.token) {
-    return { status: 'PASSED', log: `TTA create test case flow: login via UI succeeded` };
-  }
-  return { status: 'FAILED', log: `TTA login via UI failed: ${JSON.stringify(result)}`, error: 'Login failed in TTA self-test' };
+  if (!health?.includes('ok')) throw new Error('TTA backend health check failed');
+
+  const login = await request.post(`${base}/api/auth/login`, { data: { email: 'lead@tta.local', password: 'Lead@123' } });
+  const auth = await login.json();
+  if (!login.ok() || !auth.token) throw new Error(`Lead login failed with ${login.status()}`);
+  const headers = { Authorization: `Bearer ${auth.token}` };
+  const created = await request.post(`${base}/api/test-cases`, {
+    headers,
+    data: {
+      projectId: Number(process.env.TEST_PROJECT_ID || 1),
+      title: `Playwright self-test ${run.id}`,
+      expectedResult: 'The test case is created by the platform API.',
+      module: 'Automation',
+      priority: 'low',
+    },
+  });
+  const body = await created.json();
+  const testCaseId = body.testCase?.id;
+  if (!created.ok() || !testCaseId) throw new Error(`Test case creation failed: ${created.status()} ${JSON.stringify(body)}`);
+  log(`Created ${body.testCase.code} through the TTA API`);
+
+  const deleted = await request.delete(`${base}/api/test-cases/${testCaseId}`, { headers });
+  if (!deleted.ok()) throw new Error(`Temporary test case cleanup failed: ${deleted.status()}`);
+  return { status: 'PASSED', log: `TTA self-test created and removed ${body.testCase.code}` };
 };
